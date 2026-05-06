@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Learning - Pronósticos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Header -->
+    <header class="border-b border-gray-700/30 backdrop-blur-xl bg-black/30 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="/" class="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Machine Learning</h1>
+                        <p class="text-xs text-gray-400">Predicciones inteligentes</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <a href="/historial" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                        <i class="fas fa-history mr-2"></i>Historial
+                    </a>
+                    <a href="/" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                        <i class="fas fa-home mr-2"></i>Inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- ML Stats -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-brain text-purple-400"></i>
+                    <span class="text-gray-400 text-xs">Estado del Modelo</span>
+                </div>
+                <div class="text-xl font-bold" id="model-status">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-database text-blue-400"></i>
+                    <span class="text-gray-400 text-xs">Datos de Entrenamiento</span>
+                </div>
+                <div class="text-xl font-bold" id="training-data">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-chart-bar text-green-400"></i>
+                    <span class="text-gray-400 text-xs">Feature Importancia</span>
+                </div>
+                <div class="text-xl font-bold" id="feature-importance">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-clock text-yellow-400"></i>
+                    <span class="text-gray-400 text-xs">Último Entrenamiento</span>
+                </div>
+                <div class="text-xl font-bold" id="last-training">-</div>
+            </div>
+        </div>
+
+        <!-- Train Button -->
+        <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-700/30 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-2">Entrenar Modelo</h2>
+                    <p class="text-gray-400 text-sm">Entrena el modelo con los datos históricos de pronósticos</p>
+                </div>
+                <button onclick="trainModel()" id="train-btn" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-3 rounded-lg font-medium transition-all shadow-lg">
+                    <i class="fas fa-play mr-2"></i>Entrenar
+                </button>
+            </div>
+            <div id="training-status" class="mt-4 hidden">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-spinner fa-spin text-purple-400"></i>
+                    <span class="text-gray-400">Entrenando modelo...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Importance -->
+        <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-700/30 mb-8">
+            <h2 class="text-xl font-bold mb-4">Importancia de Features</h2>
+            <div id="feature-importance-chart" class="space-y-4">
+                <p class="text-gray-400">Entrena el modelo para ver la importancia de cada feature</p>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-700/30">
+            <h2 class="text-xl font-bold mb-4">¿Cómo funciona?</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-database text-purple-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-semibold mb-2">1. Recopilar Datos</h3>
+                    <p class="text-gray-400 text-sm">El modelo aprende de pronósticos pasados y sus resultados</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-cogs text-blue-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-semibold mb-2">2. Entrenar</h3>
+                    <p class="text-gray-400 text-sm">Random Forest analiza patrones en los datos</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-chart-line text-green-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-semibold mb-2">3. Predecir</h3>
+                    <p class="text-gray-400 text-sm">El modelo predice qué pronósticos tienen más probabilidad de acierto</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function fetchMLStats() {
+            try {
+                const response = await fetch('/api/ml/stats');
+                const data = await response.json();
+
+                if (data.model_trained) {
+                    document.getElementById('model-status').textContent = 'Entrenado';
+                    document.getElementById('model-status').classList.add('text-green-400');
+
+                    if (data.feature_importance) {
+                        const importance = data.feature_importance;
+                        document.getElementById('feature-importance').textContent = 'Disponible';
+
+                        // Render feature importance chart
+                        const chart = document.getElementById('feature-importance-chart');
+                        chart.innerHTML = Object.entries(importance).map(([name, value]) => `
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-400">${name}</span>
+                                    <span class="text-sm font-medium">${(value * 100).toFixed(1)}%</span>
+                                </div>
+                                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style="width: ${value * 100}%"></div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    document.getElementById('model-status').textContent = 'No entrenado';
+                    document.getElementById('model-status').classList.add('text-yellow-400');
+                    document.getElementById('training-data').textContent = 'Insuficiente';
+                    document.getElementById('feature-importance').textContent = 'N/A';
+                }
+            } catch (error) {
+                console.error('Error fetching ML stats:', error);
+            }
+        }
+
+        async function trainModel() {
+            const btn = document.getElementById('train-btn');
+            const status = document.getElementById('training-status');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Entrenando...';
+            status.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/ml/train', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    alert('Modelo entrenado exitosamente');
+                    fetchMLStats();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error al entrenar el modelo');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play mr-2"></i>Entrenar';
+                status.classList.add('hidden');
+            }
+        }
+
+        fetchMLStats();
+    </script>
+</body>
+</html>
