@@ -101,7 +101,7 @@ def get_pronosticos(limit=50, status=None):
         pronostico['is_clear_favorite'] = bool(pronostico['is_clear_favorite'])
         pronostico['is_very_safe'] = bool(pronostico['is_very_safe'])
         pronostico['is_risky'] = bool(pronostico['is_risky'])
-        pronosticos.append(prronostico)
+        pronosticos.append(pronostico)
 
     conn.close()
     return pronosticos

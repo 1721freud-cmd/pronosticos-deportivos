@@ -291,7 +291,7 @@
             document.getElementById('avg-confidence').textContent = (stats.avg_confidence || 0) + '%';
 
             const now = new Date();
-            document.getElementById('last-update').textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('last-update').textContent = now.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit' });
         }
 
         function getConfidenceBadge(match) {
@@ -485,11 +485,13 @@
         }
 
         function scheduleNextUpdate() {
+            // Obtener hora actual en Argentina (UTC-3)
             const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
+            const argentinaTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
+            const hours = argentinaTime.getHours();
+            const minutes = argentinaTime.getMinutes();
 
-            // Calcular tiempo hasta la próxima actualización (12am o 12pm)
+            // Calcular tiempo hasta la próxima actualización (12am o 12pm hora argentina)
             let nextUpdateHours;
             if (hours < 12) {
                 nextUpdateHours = 12 - hours;
@@ -500,7 +502,8 @@
             const nextUpdateMinutes = 60 - minutes;
             const nextUpdateMs = (nextUpdateHours * 60 * 60 * 1000) + (nextUpdateMinutes * 60 * 1000);
 
-            console.log(`Próxima actualización en ${nextUpdateHours} horas y ${nextUpdateMinutes} minutos`);
+            const nextUpdateDate = new Date(now.getTime() + nextUpdateMs);
+            console.log(`Próxima actualización a las ${nextUpdateDate.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })} (hora argentina)`);
 
             setTimeout(() => {
                 fetchMatches();
