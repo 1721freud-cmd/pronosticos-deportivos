@@ -94,6 +94,9 @@
                         <span class="pulse-dot w-2 h-2 bg-green-500 rounded-full"></span>
                         <span class="text-gray-400">En vivo</span>
                     </div>
+                    <a href="/historial" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                        <i class="fas fa-history mr-2"></i>Historial
+                    </a>
                     <button onclick="refreshData()" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-blue-500/25">
                         <i class="fas fa-sync-alt mr-2"></i>Actualizar
                     </button>
@@ -208,6 +211,24 @@
                     <button onclick="filterMatches('very-safe')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="very-safe">
                         <i class="fas fa-shield-alt mr-2"></i>Muy seguros
                     </button>
+                    <button onclick="filterMatches('premier')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="premier">
+                        <i class="fas fa-trophy mr-2"></i>Premier
+                    </button>
+                    <button onclick="filterMatches('laliga')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="laliga">
+                        <i class="fas fa-trophy mr-2"></i>La Liga
+                    </button>
+                    <button onclick="filterMatches('seriea')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="seriea">
+                        <i class="fas fa-trophy mr-2"></i>Serie A
+                    </button>
+                    <button onclick="filterMatches('bundesliga')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="bundesliga">
+                        <i class="fas fa-trophy mr-2"></i>Bundesliga
+                    </button>
+                    <button onclick="filterMatches('ucl')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="ucl">
+                        <i class="fas fa-star mr-2"></i>UCL
+                    </button>
+                    <button onclick="filterMatches('argentina')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="argentina">
+                        <i class="fas fa-flag mr-2"></i>Argentina
+                    </button>
                 </div>
             </div>
 
@@ -321,6 +342,7 @@
                                 <span class="text-gray-400 text-sm">${match.date} • ${match.time}</span>
                                 ${match.is_today ? '<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-medium">HOY</span>' : ''}
                                 ${match.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
+                                ${match.league ? `<span class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs font-medium">${match.league}</span>` : ''}
                             </div>
                             <div class="flex items-center justify-between mb-4">
                                 <div class="text-lg font-semibold">${match.home_team}</div>
@@ -364,6 +386,18 @@
                 filteredMatches = allMatches.filter(m => m.is_clear_favorite);
             } else if (currentFilter === 'very-safe') {
                 filteredMatches = allMatches.filter(m => m.is_very_safe);
+            } else if (currentFilter === 'premier') {
+                filteredMatches = allMatches.filter(m => m.league === 'Premier League');
+            } else if (currentFilter === 'laliga') {
+                filteredMatches = allMatches.filter(m => m.league === 'La Liga');
+            } else if (currentFilter === 'seriea') {
+                filteredMatches = allMatches.filter(m => m.league === 'Serie A');
+            } else if (currentFilter === 'bundesliga') {
+                filteredMatches = allMatches.filter(m => m.league === 'Bundesliga');
+            } else if (currentFilter === 'ucl') {
+                filteredMatches = allMatches.filter(m => m.league === 'Champions League');
+            } else if (currentFilter === 'argentina') {
+                filteredMatches = allMatches.filter(m => m.league === 'Liga Argentina');
             }
 
             if (filteredMatches.length === 0) {
@@ -380,11 +414,12 @@
             container.innerHTML = filteredMatches.map((match, index) => `
                 <div class="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-gray-700/30 card-glow fade-in ${match.is_very_safe ? 'border-green-500/30' : match.is_clear_favorite ? 'border-blue-500/30' : ''}" style="animation-delay: ${index * 0.05}s">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             ${match.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
                             <span class="text-gray-400 text-sm">${match.date} • ${match.time}</span>
                             ${match.is_today ? '<span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-medium">HOY</span>' : ''}
                             ${match.is_tomorrow ? '<span class="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">MAÑANA</span>' : ''}
+                            ${match.league ? `<span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs font-medium">${match.league}</span>` : ''}
                         </div>
                         ${getConfidenceBadge(match)}
                     </div>
@@ -449,8 +484,32 @@
             fetchMatches();
         }
 
+        function scheduleNextUpdate() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+
+            // Calcular tiempo hasta la próxima actualización (12am o 12pm)
+            let nextUpdateHours;
+            if (hours < 12) {
+                nextUpdateHours = 12 - hours;
+            } else {
+                nextUpdateHours = 24 - hours;
+            }
+
+            const nextUpdateMinutes = 60 - minutes;
+            const nextUpdateMs = (nextUpdateHours * 60 * 60 * 1000) + (nextUpdateMinutes * 60 * 1000);
+
+            console.log(`Próxima actualización en ${nextUpdateHours} horas y ${nextUpdateMinutes} minutos`);
+
+            setTimeout(() => {
+                fetchMatches();
+                scheduleNextUpdate(); // Programar la siguiente actualización
+            }, nextUpdateMs);
+        }
+
         fetchMatches();
-        setInterval(fetchMatches, 7200000);  // 2 horas
+        scheduleNextUpdate(); // Programar actualizaciones a las 12am y 12pm
     </script>
 </body>
 </html>

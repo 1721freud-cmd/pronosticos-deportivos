@@ -1,10 +1,11 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import requests
 import os
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from functools import lru_cache
 import time
+from database import init_db, save_pronostico, get_pronosticos, get_stats as get_db_stats, update_pronostico_status
 
 load_dotenv()
 
@@ -14,8 +15,12 @@ app = Flask(__name__)
 ODDS_API_KEY = os.getenv('ODDS_API_KEY')
 BASE_URL = 'https://api.the-odds-api.com/v4'
 
+# Inicializar base de datos
+init_db()
+
 # Cache para evitar llamadas repetidas a la API
-CACHE_DURATION = 7200  # 2 horas (7200 segundos) - para no exceder el límite de 500 requests/mes
+# Actualización a las 12am y 12pm (12 horas de cache)
+CACHE_DURATION = 43200  # 12 horas (43200 segundos)
 cache = {'data': None, 'timestamp': 0}
 
 def get_odds(sport_key, regions='us', markets='h2h'):
@@ -152,19 +157,39 @@ def get_all_matches():
 
     matches = []
 
-    # Fútbol - Premier League
-    football_matches = get_odds('soccer_epl', regions='eu', markets='h2h')
-    for match in football_matches:
-        analyzed = analyze_match(match, 'football')
-        if analyzed:
-            matches.append(analyzed)
+    # Ligas de fútbol
+    football_leagues = [
+        ('soccer_epl', 'Premier League'),
+        ('soccer_la_liga', 'La Liga'),
+        ('soccer_serie_a', 'Serie A'),
+        ('soccer_bundesliga', 'Bundesliga'),
+        ('soccer_uefa_champions_league', 'Champions League'),
+        ('soccer_argentina_primera_division', 'Liga Argentina')
+    ]
+
+    for league_key, league_name in football_leagues:
+        try:
+            league_matches = get_odds(league_key, regions='eu', markets='h2h')
+            for match in league_matches:
+                analyzed = analyze_match(match, 'football')
+                if analyzed:
+                    analyzed['league'] = league_name
+                    matches.append(analyzed)
+                    save_pronostico(analyzed)
+        except Exception as e:
+            print(f"Error obteniendo {league_name}: {e}")
 
     # NBA
-    nba_matches = get_odds('basketball_nba', regions='us', markets='h2h')
-    for match in nba_matches:
-        analyzed = analyze_match(match, 'basketball')
-        if analyzed:
-            matches.append(analyzed)
+    try:
+        nba_matches = get_odds('basketball_nba', regions='us', markets='h2h')
+        for match in nba_matches:
+            analyzed = analyze_match(match, 'basketball')
+            if analyzed:
+                analyzed['league'] = 'NBA'
+                matches.append(analyzed)
+                save_pronostico(analyzed)
+    except Exception as e:
+        print(f"Error obteniendo NBA: {e}")
 
     # Ordenar por fecha
     matches.sort(key=lambda x: x['datetime'] if x['datetime'] else datetime.max)
@@ -256,6 +281,35 @@ def api_combinada():
 @app.route('/api/health')
 def health():
     return jsonify({'status': 'ok', 'message': 'API funcionando correctamente'})
+
+@app.route('/historial')
+def historial():
+    return render_template('historial.html')
+
+@app.route('/api/historial')
+def api_historial():
+    limit = int(request.args.get('limit', 50))
+    status = request.args.get('status')
+    pronosticos = get_pronosticos(limit=limit, status=status)
+    stats = get_db_stats()
+    return jsonify({
+        'pronosticos': pronosticos,
+        'stats': stats,
+        'total': len(pronosticos)
+    })
+
+@app.route('/api/historial/stats')
+def api_historial_stats():
+    stats = get_db_stats()
+    return jsonify(stats)
+
+@app.route('/api/historial/<match_id>/update', methods=['POST'])
+def update_pronostico(match_id):
+    data = request.json
+    status = data.get('status')
+    result = data.get('result')
+    update_pronostico_status(match_id, status, result)
+    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     print("Iniciando servidor de pronosticos deportivos...")

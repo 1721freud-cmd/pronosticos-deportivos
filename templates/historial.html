@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Pronósticos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+        }
+        .card-glow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .card-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+        }
+        .won-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .lost-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .pending-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Header -->
+    <header class="border-b border-gray-700/30 backdrop-blur-xl bg-black/30 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="/" class="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Historial</h1>
+                        <p class="text-xs text-gray-400">Pronósticos realizados</p>
+                    </div>
+                </div>
+                <a href="/" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-list text-blue-400"></i>
+                    <span class="text-gray-400 text-xs">Total</span>
+                </div>
+                <div class="text-2xl font-bold" id="total-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-check-circle text-green-400"></i>
+                    <span class="text-gray-400 text-xs">Acertados</span>
+                </div>
+                <div class="text-2xl font-bold text-green-400" id="won-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-times-circle text-red-400"></i>
+                    <span class="text-gray-400 text-xs">Fallados</span>
+                </div>
+                <div class="text-2xl font-bold text-red-400" id="lost-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-clock text-yellow-400"></i>
+                    <span class="text-gray-400 text-xs">Pendientes</span>
+                </div>
+                <div class="text-2xl font-bold text-yellow-400" id="pending-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-percentage text-purple-400"></i>
+                    <span class="text-gray-400 text-xs">Acierto</span>
+                </div>
+                <div class="text-2xl font-bold text-purple-400" id="win-rate">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-star text-orange-400"></i>
+                    <span class="text-gray-400 text-xs">Favoritos</span>
+                </div>
+                <div class="text-2xl font-bold text-orange-400" id="favorites-count">-</div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button onclick="filterHistorial('all')" class="filter-btn active bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="all">
+                <i class="fas fa-th-large mr-2"></i>Todos
+            </button>
+            <button onclick="filterHistorial('won')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="won">
+                <i class="fas fa-check mr-2"></i>Acertados
+            </button>
+            <button onclick="filterHistorial('lost')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="lost">
+                <i class="fas fa-times mr-2"></i>Fallados
+            </button>
+            <button onclick="filterHistorial('pending')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="pending">
+                <i class="fas fa-clock mr-2"></i>Pendientes
+            </button>
+        </div>
+
+        <!-- Historial Container -->
+        <div id="historial-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="col-span-full text-center py-12 text-gray-400">
+                <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                <p>Cargando historial...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let allPronosticos = [];
+        let currentFilter = 'all';
+
+        async function fetchHistorial() {
+            try {
+                const response = await fetch('/api/historial?limit=100');
+                const data = await response.json();
+                allPronosticos = data.pronosticos;
+                updateStats(data.stats);
+                renderHistorial();
+            } catch (error) {
+                console.error('Error fetching historial:', error);
+                document.getElementById('historial-container').innerHTML = `
+                    <div class="col-span-full text-center py-12 text-red-400">
+                        <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
+                        <p class="text-lg">Error al cargar el historial</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('total-count').textContent = stats.total || 0;
+            document.getElementById('won-count').textContent = stats.won || 0;
+            document.getElementById('lost-count').textContent = stats.lost || 0;
+            document.getElementById('pending-count').textContent = stats.pending || 0;
+            document.getElementById('win-rate').textContent = (stats.win_rate || 0) + '%';
+            document.getElementById('favorites-count').textContent = stats.favorites || 0;
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'won') {
+                return '<span class="won-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>ACERTADO</span>';
+            } else if (status === 'lost') {
+                return '<span class="lost-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-times mr-1"></i>FALLADO</span>';
+            } else {
+                return '<span class="pending-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-clock mr-1"></i>PENDIENTE</span>';
+            }
+        }
+
+        function getStatusColor(status) {
+            if (status === 'won') return 'text-green-400';
+            if (status === 'lost') return 'text-red-400';
+            return 'text-yellow-400';
+        }
+
+        function getConfidenceColor(confidence) {
+            if (confidence >= 75) return 'from-green-500 to-emerald-500';
+            if (confidence >= 60) return 'from-blue-500 to-cyan-500';
+            if (confidence >= 50) return 'from-yellow-500 to-orange-500';
+            return 'from-red-500 to-pink-500';
+        }
+
+        function getConfidenceTextColor(confidence) {
+            if (confidence >= 75) return 'text-green-400';
+            if (confidence >= 60) return 'text-blue-400';
+            if (confidence >= 50) return 'text-yellow-400';
+            return 'text-red-400';
+        }
+
+        function renderHistorial() {
+            const container = document.getElementById('historial-container');
+
+            let filteredPronosticos = allPronosticos;
+            if (currentFilter !== 'all') {
+                filteredPronosticos = allPronosticos.filter(p => p.status === currentFilter);
+            }
+
+            if (filteredPronosticos.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fas fa-calendar-times text-5xl mb-4"></i>
+                        <p class="text-lg">No hay pronósticos con este filtro</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredPronosticos.map((p, index) => `
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-gray-700/30 card-glow">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            ${p.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
+                            <span class="text-gray-400 text-sm">${p.date} • ${p.time}</span>
+                        </div>
+                        ${getStatusBadge(p.status)}
+                    </div>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-center flex-1">
+                            <div class="font-semibold text-sm mb-1 truncate">${p.home_team}</div>
+                            <div class="text-lg font-bold ${p.prediction_team === 'home' ? 'text-green-400' : 'text-gray-400'}">${p.home_odds}</div>
+                        </div>
+                        <div class="text-center px-3">
+                            <div class="text-gray-600 text-xs font-bold">VS</div>
+                        </div>
+                        <div class="text-center flex-1">
+                            <div class="font-semibold text-sm mb-1 truncate">${p.away_team}</div>
+                            <div class="text-lg font-bold ${p.prediction_team === 'away' ? 'text-green-400' : 'text-gray-400'}">${p.away_odds}</div>
+                        </div>
+                    </div>
+
+                    ${p.draw_odds ? `
+                    <div class="text-center mb-4 py-2 bg-white/5 rounded-lg">
+                        <span class="text-gray-400 text-sm">Empate: </span>
+                        <span class="font-bold ${p.prediction_team === 'draw' ? 'text-green-400' : 'text-gray-400'}">${p.draw_odds}</span>
+                    </div>
+                    ` : ''}
+
+                    <div class="border-t border-gray-700/30 pt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-400">Nivel de Confianza</span>
+                            <span class="text-xl font-bold ${getConfidenceTextColor(p.confidence)}">${p.confidence}%</span>
+                        </div>
+                        <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r ${getConfidenceColor(p.confidence)} rounded-full" style="width: ${p.confidence}%"></div>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-sm text-gray-400">Pronóstico: </span>
+                            <span class="font-medium ${getStatusColor(p.status)}">${p.prediction}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterHistorial(filter) {
+            currentFilter = filter;
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.classList.remove('bg-white/10');
+                    btn.classList.add('bg-blue-600');
+                } else {
+                    btn.classList.remove('bg-blue-600');
+                    btn.classList.add('bg-white/10');
+                }
+            });
+
+            renderHistorial();
+        }
+
+        fetchHistorial();
+    </script>
+</body>
+</html>
