@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronósticos Deportivos - Fútbol & NBA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+        }
+        .card-glow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .card-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15);
+        }
+        .confidence-bar {
+            transition: width 0.8s ease-out;
+        }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+        }
+        .combinada-card {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+        }
+        .very-safe-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .favorite-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        .risky-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Header -->
+    <header class="border-b border-gray-700/30 backdrop-blur-xl bg-black/30 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Pronósticos Pro</h1>
+                        <p class="text-xs text-gray-400">Análisis inteligente de cuotas</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="hidden md:flex items-center gap-2 text-sm bg-white/5 px-3 py-2 rounded-lg">
+                        <span class="pulse-dot w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span class="text-gray-400">En vivo</span>
+                    </div>
+                    <button onclick="refreshData()" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-blue-500/25">
+                        <i class="fas fa-sync-alt mr-2"></i>Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-calendar-day text-blue-400"></i>
+                    <span class="text-gray-400 text-xs">Hoy</span>
+                </div>
+                <div class="text-2xl font-bold" id="today-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-calendar-plus text-purple-400"></i>
+                    <span class="text-gray-400 text-xs">Mañana</span>
+                </div>
+                <div class="text-2xl font-bold" id="tomorrow-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-star text-yellow-400"></i>
+                    <span class="text-gray-400 text-xs">Favoritos</span>
+                </div>
+                <div class="text-2xl font-bold text-yellow-400" id="favorites-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-shield-alt text-green-400"></i>
+                    <span class="text-gray-400 text-xs">Muy seguros</span>
+                </div>
+                <div class="text-2xl font-bold text-green-400" id="very-safe-count">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-percentage text-orange-400"></i>
+                    <span class="text-gray-400 text-xs">Confianza</span>
+                </div>
+                <div class="text-2xl font-bold text-orange-400" id="avg-confidence">-</div>
+            </div>
+            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-clock text-cyan-400"></i>
+                    <span class="text-gray-400 text-xs">Actualizado</span>
+                </div>
+                <div class="text-lg font-bold text-cyan-400" id="last-update">-</div>
+            </div>
+        </div>
+
+        <!-- La Combinada del Día -->
+        <section class="mb-10">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">La Combinada del Día</h2>
+                        <p class="text-sm text-gray-400">Top 3 pronósticos más seguros de hoy</p>
+                    </div>
+                </div>
+                <span class="bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-medium hidden md:block">
+                    <i class="fas fa-fire mr-1"></i>Alta confianza
+                </span>
+            </div>
+
+            <div id="combinada-container" class="grid gap-4">
+                <div class="loading-spinner mx-auto"></div>
+            </div>
+        </section>
+
+        <!-- Todos los Partidos -->
+        <section>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">Partidos</h2>
+                        <p class="text-sm text-gray-400">Hoy y mañana</p>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+                    <button onclick="filterMatches('all')" class="filter-btn active bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="all">
+                        <i class="fas fa-th-large mr-2"></i>Todos
+                    </button>
+                    <button onclick="filterMatches('today')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="today">
+                        <i class="fas fa-calendar-day mr-2"></i>Hoy
+                    </button>
+                    <button onclick="filterMatches('tomorrow')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="tomorrow">
+                        <i class="fas fa-calendar-plus mr-2"></i>Mañana
+                    </button>
+                    <button onclick="filterMatches('football')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="football">
+                        <i class="fas fa-futbol mr-2"></i>Fútbol
+                    </button>
+                    <button onclick="filterMatches('basketball')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="basketball">
+                        <i class="fas fa-basketball-ball mr-2"></i>NBA
+                    </button>
+                    <button onclick="filterMatches('favorites')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="favorites">
+                        <i class="fas fa-star mr-2"></i>Favoritos
+                    </button>
+                    <button onclick="filterMatches('very-safe')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="very-safe">
+                        <i class="fas fa-shield-alt mr-2"></i>Muy seguros
+                    </button>
+                </div>
+            </div>
+
+            <div id="matches-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="loading-spinner mx-auto"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-700/30 mt-12 py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400 text-sm mb-2">
+                <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                Los pronósticos se basan en cuotas de casas de apuestas. Apuesta responsablemente.
+            </p>
+            <p class="text-gray-500 text-xs">Datos proporcionados por The Odds API</p>
+        </div>
+    </footer>
+
+    <script>
+        let allMatches = [];
+        let currentFilter = 'all';
+
+        async function fetchMatches() {
+            try {
+                const response = await fetch('/api/matches');
+                const data = await response.json();
+                allMatches = data.matches;
+                updateStats(data.stats);
+                renderMatches();
+                await fetchCombinada();
+            } catch (error) {
+                console.error('Error fetching matches:', error);
+                document.getElementById('matches-container').innerHTML = `
+                    <div class="col-span-full text-center py-12 text-red-400">
+                        <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
+                        <p class="text-lg">Error al cargar los datos</p>
+                        <p class="text-sm text-gray-400 mt-2">Verifica tu API Key o intenta más tarde</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function fetchCombinada() {
+            try {
+                const response = await fetch('/api/combinada');
+                const data = await response.json();
+                renderCombinada(data.combinada);
+            } catch (error) {
+                console.error('Error fetching combinada:', error);
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('today-count').textContent = stats.today_count || 0;
+            document.getElementById('tomorrow-count').textContent = stats.tomorrow_count || 0;
+            document.getElementById('favorites-count').textContent = stats.favorites || 0;
+            document.getElementById('very-safe-count').textContent = stats.very_safe || 0;
+            document.getElementById('avg-confidence').textContent = (stats.avg_confidence || 0) + '%';
+
+            const now = new Date();
+            document.getElementById('last-update').textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getConfidenceBadge(match) {
+            if (match.is_very_safe) {
+                return '<span class="very-safe-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-shield-alt mr-1"></i>MUY SEGURO</span>';
+            } else if (match.is_clear_favorite) {
+                return '<span class="favorite-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-star mr-1"></i>FAVORITO</span>';
+            } else if (match.is_risky) {
+                return '<span class="risky-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>RIESGOSO</span>';
+            }
+            return '';
+        }
+
+        function getConfidenceColor(confidence) {
+            if (confidence >= 75) return 'from-green-500 to-emerald-500';
+            if (confidence >= 60) return 'from-blue-500 to-cyan-500';
+            if (confidence >= 50) return 'from-yellow-500 to-orange-500';
+            return 'from-red-500 to-pink-500';
+        }
+
+        function getConfidenceTextColor(confidence) {
+            if (confidence >= 75) return 'text-green-400';
+            if (confidence >= 60) return 'text-blue-400';
+            if (confidence >= 50) return 'text-yellow-400';
+            return 'text-red-400';
+        }
+
+        function renderCombinada(combinada) {
+            const container = document.getElementById('combinada-container');
+
+            if (combinada.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-gray-700/30 text-center">
+                        <i class="fas fa-info-circle text-5xl text-gray-500 mb-4"></i>
+                        <p class="text-gray-400">No hay suficientes favoritos claros hoy</p>
+                        <p class="text-sm text-gray-500 mt-2">Se requiere confianza ≥ 60%</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = combinada.map((match, index) => `
+                <div class="combinada-card backdrop-blur-sm rounded-xl p-5 border border-yellow-500/30 card-glow fade-in" style="animation-delay: ${index * 0.1}s">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-3 flex-wrap">
+                                <span class="bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-3 py-1 rounded-lg text-sm font-bold">#${index + 1}</span>
+                                <span class="text-gray-400 text-sm">${match.date} • ${match.time}</span>
+                                ${match.is_today ? '<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-medium">HOY</span>' : ''}
+                                ${match.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="text-lg font-semibold">${match.home_team}</div>
+                                <div class="text-gray-500 font-bold">VS</div>
+                                <div class="text-lg font-semibold">${match.away_team}</div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm text-gray-400">Confianza</span>
+                                        <span class="text-2xl font-bold text-yellow-400">${match.confidence}%</span>
+                                    </div>
+                                    <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+                                        <div class="confidence-bar h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full" style="width: ${match.confidence}%"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-400">Pronóstico</div>
+                                    <div class="text-lg font-bold text-white">${match.prediction}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMatches() {
+            const container = document.getElementById('matches-container');
+
+            let filteredMatches = allMatches;
+            if (currentFilter === 'today') {
+                filteredMatches = allMatches.filter(m => m.is_today);
+            } else if (currentFilter === 'tomorrow') {
+                filteredMatches = allMatches.filter(m => m.is_tomorrow);
+            } else if (currentFilter === 'football') {
+                filteredMatches = allMatches.filter(m => m.sport === 'football');
+            } else if (currentFilter === 'basketball') {
+                filteredMatches = allMatches.filter(m => m.sport === 'basketball');
+            } else if (currentFilter === 'favorites') {
+                filteredMatches = allMatches.filter(m => m.is_clear_favorite);
+            } else if (currentFilter === 'very-safe') {
+                filteredMatches = allMatches.filter(m => m.is_very_safe);
+            }
+
+            if (filteredMatches.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fas fa-calendar-times text-5xl mb-4"></i>
+                        <p class="text-lg">No hay partidos disponibles</p>
+                        <p class="text-sm text-gray-500 mt-2">Intenta con otro filtro</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredMatches.map((match, index) => `
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-gray-700/30 card-glow fade-in ${match.is_very_safe ? 'border-green-500/30' : match.is_clear_favorite ? 'border-blue-500/30' : ''}" style="animation-delay: ${index * 0.05}s">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            ${match.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
+                            <span class="text-gray-400 text-sm">${match.date} • ${match.time}</span>
+                            ${match.is_today ? '<span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-medium">HOY</span>' : ''}
+                            ${match.is_tomorrow ? '<span class="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">MAÑANA</span>' : ''}
+                        </div>
+                        ${getConfidenceBadge(match)}
+                    </div>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-center flex-1">
+                            <div class="font-semibold text-sm mb-1 truncate">${match.home_team}</div>
+                            <div class="text-lg font-bold ${match.prediction_team === 'home' ? 'text-green-400' : 'text-gray-400'}">${match.home_odds}</div>
+                        </div>
+                        <div class="text-center px-3">
+                            <div class="text-gray-600 text-xs font-bold">VS</div>
+                        </div>
+                        <div class="text-center flex-1">
+                            <div class="font-semibold text-sm mb-1 truncate">${match.away_team}</div>
+                            <div class="text-lg font-bold ${match.prediction_team === 'away' ? 'text-green-400' : 'text-gray-400'}">${match.away_odds}</div>
+                        </div>
+                    </div>
+
+                    ${match.draw_odds ? `
+                    <div class="text-center mb-4 py-2 bg-white/5 rounded-lg">
+                        <span class="text-gray-400 text-sm">Empate: </span>
+                        <span class="font-bold ${match.prediction_team === 'draw' ? 'text-green-400' : 'text-gray-400'}">${match.draw_odds}</span>
+                    </div>
+                    ` : ''}
+
+                    <div class="border-t border-gray-700/30 pt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-400">Nivel de Confianza</span>
+                            <span class="text-xl font-bold ${getConfidenceTextColor(match.confidence)}">${match.confidence}%</span>
+                        </div>
+                        <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="confidence-bar h-full bg-gradient-to-r ${getConfidenceColor(match.confidence)} rounded-full" style="width: ${match.confidence}%"></div>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-sm text-gray-400">Pronóstico: </span>
+                            <span class="font-medium ${getConfidenceTextColor(match.confidence)}">${match.prediction}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterMatches(filter) {
+            currentFilter = filter;
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.classList.remove('bg-white/10');
+                    btn.classList.add('bg-blue-600');
+                } else {
+                    btn.classList.remove('bg-blue-600');
+                    btn.classList.add('bg-white/10');
+                }
+            });
+
+            renderMatches();
+        }
+
+        function refreshData() {
+            document.getElementById('matches-container').innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            document.getElementById('combinada-container').innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            fetchMatches();
+        }
+
+        fetchMatches();
+        setInterval(fetchMatches, 7200000);  // 2 horas
+    </script>
+</body>
+</html>

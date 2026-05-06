@@ -1,0 +1,4 @@
+PassengerAppRoot /home/usuario/public_html/pronosticos
+PassengerPython /home/usuario/.local/bin/python3.11
+PassengerAppType wsgi
+PassengerStartupFile passenger_wsgi.py
