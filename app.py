@@ -373,11 +373,12 @@ def check_finished():
 @app.route('/api/debug')
 def debug():
     """Endpoint de depuración para ver el estado de la base de datos"""
-    from database import get_pronosticos, get_active_matches, get_finished_matches
+    from database import get_pronosticos, get_active_matches, get_finished_matches, get_stats
 
     active = get_active_matches()
     finished = get_finished_matches()
     all_pronosticos = get_pronosticos(limit=100)
+    stats = get_stats()
 
     return jsonify({
         'active_count': len(active),
@@ -385,7 +386,21 @@ def debug():
         'finished_count': len(finished),
         'finished_matches': finished[:5],  # Primeros 5 terminados
         'total_historial': len(all_pronosticos),
-        'historial_sample': all_pronosticos[:5]  # Primeros 5 del historial
+        'historial_sample': all_pronosticos[:5],  # Primeros 5 del historial
+        'stats': stats
+    })
+
+
+@app.route('/api/debug-all')
+def debug_all():
+    """Endpoint de depuración para ver todos los partidos"""
+    from database import get_pronosticos
+
+    all_pronosticos = get_pronosticos(limit=10, status=None)
+
+    return jsonify({
+        'total': len(all_pronosticos),
+        'sample': all_pronosticos
     })
 
 

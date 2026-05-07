@@ -113,6 +113,9 @@ if USE_POSTGRES:
             if status:
                 query += ' WHERE status = %s'
                 params.append(status)
+            elif status is None:
+                # No filtrar por estado, devolver todos
+                pass
             else:
                 query += ' WHERE status != %s'
                 params.append('active')
@@ -316,6 +319,9 @@ else:
             if status:
                 query += ' WHERE status = ?'
                 params.append(status)
+            elif status is None:
+                # No filtrar por estado, devolver todos
+                pass
             else:
                 query += ' WHERE status != ?'
                 params.append('active')
