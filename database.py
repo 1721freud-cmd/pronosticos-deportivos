@@ -187,10 +187,10 @@ def get_finished_matches():
     with get_db_connection() as conn:
         cursor = conn.cursor()
 
-        # Obtener partidos con commence_time anterior a ahora y estado activo
+        # Obtener partidos con commence_time anterior a hace 4 horas y estado activo
         cursor.execute('''
             SELECT * FROM pronosticos
-            WHERE commence_time < datetime('now')
+            WHERE datetime(commence_time) < datetime('now', '-4 hours')
             AND status = 'active'
         ''')
         results = cursor.fetchall()
