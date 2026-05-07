@@ -22,7 +22,7 @@ CONFIDENCE_THRESHOLD_RISKY = 50
 init_db()
 
 # Cache en memoria
-cache = {'data': None, 'timestamp': 0}
+cache = {'data': None, 'timestamp': 0, 'last_update': None}
 
 # Ligas de fútbol
 FOOTBALL_LEAGUES = [
@@ -208,22 +208,33 @@ def get_all_matches():
 
     cache['data'] = matches
     cache['timestamp'] = current_time
+    cache['last_update'] = datetime.now(timezone.utc)  # Guardar fecha de actualización
 
     return matches
 
 
 def get_todays_matches():
-    """Obtiene solo partidos de los próximos 3 días"""
+    """Obtiene partidos de las últimas 24 horas desde la última actualización"""
     all_matches = get_all_matches()
-    return [m for m in all_matches if m['days_until'] <= 2]
+
+    if cache['last_update']:
+        # Filtrar partidos de las últimas 24 horas desde la última actualización
+        cutoff_time = cache['last_update'] - timedelta(hours=24)
+        return [m for m in all_matches if m['datetime'] and m['datetime'] >= cutoff_time]
+    else:
+        # Si no hay actualización registrada, mostrar todos los partidos
+        return all_matches
 
 
 def get_combinada(matches):
     """Genera la combinada del día con los 3 pronósticos más seguros"""
+    cutoff_time = cache['last_update'] - timedelta(hours=24) if cache['last_update'] else None
+
     today_favorites = [
         m for m in matches
-        if m['is_clear_favorite'] and m['days_until'] <= 2
+        if m['is_clear_favorite'] and (not cutoff_time or m['datetime'] >= cutoff_time)
     ]
+
     today_favorites.sort(key=lambda x: x['confidence'], reverse=True)
     return today_favorites[:3]
 
@@ -241,15 +252,19 @@ def get_stats(matches):
             'tomorrow_count': 0
         }
 
+    cutoff_time = cache['last_update'] - timedelta(hours=24) if cache['last_update'] else None
+
     total = len(matches)
+    matches_in_window = [m for m in matches if not cutoff_time or m['datetime'] >= cutoff_time]
+
     return {
         'total': total,
-        'favorites': sum(1 for m in matches if m['is_clear_favorite']),
-        'very_safe': sum(1 for m in matches if m['is_very_safe']),
-        'risky': sum(1 for m in matches if m['is_risky']),
-        'avg_confidence': round(sum(m['confidence'] for m in matches) / total, 1),
-        'today_count': sum(1 for m in matches if m['is_today']),
-        'tomorrow_count': sum(1 for m in matches if m['is_tomorrow'])
+        'favorites': sum(1 for m in matches_in_window if m['is_clear_favorite']),
+        'very_safe': sum(1 for m in matches_in_window if m['is_very_safe']),
+        'risky': sum(1 for m in matches_in_window if m['is_risky']),
+        'avg_confidence': round(sum(m['confidence'] for m in matches_in_window) / len(matches_in_window), 1) if matches_in_window else 0,
+        'today_count': sum(1 for m in matches_in_window if m['is_today']),
+        'tomorrow_count': sum(1 for m in matches_in_window if m['is_tomorrow'])
     }
 
 

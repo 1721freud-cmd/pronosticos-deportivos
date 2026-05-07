@@ -7,6 +7,7 @@ const CONFIG = {
 // Estado global
 let allMatches = [];
 let currentFilter = 'all';
+let lastUpdateTime = null;
 
 // Utilidades
 const Utils = {
@@ -41,6 +42,22 @@ const Utils = {
             hour: '2-digit',
             minute: '2-digit'
         });
+    },
+
+    formatRelativeTime(date) {
+        const now = new Date();
+        const diffMs = date - now;
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 0) {
+            return `hace ${diffDays} días`;
+        } else if (diffHours > 0) {
+            return `hace ${diffHours} horas`;
+        } else if (diffMinutes > 0) {
+            return `hace ${Math.floor(diffMinutes / 60)} minutos`;
+        }
+        return 'Ahora mismo';
     },
 
     showLoading(containerId) {
