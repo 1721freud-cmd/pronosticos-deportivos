@@ -370,6 +370,14 @@ def check_finished():
     })
 
 
+@app.route('/api/mark-finished/<match_id>', methods=['POST'])
+def mark_match_finished(match_id):
+    """Marca manualmente un partido como terminado (para pruebas)"""
+    from database import mark_as_finished
+    mark_as_finished(match_id)
+    return jsonify({'status': 'ok', 'match_id': match_id})
+
+
 @app.route('/api/debug')
 def debug():
     """Endpoint de depuración para ver el estado de la base de datos"""

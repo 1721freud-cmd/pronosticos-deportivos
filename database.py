@@ -184,9 +184,10 @@ if USE_POSTGRES:
         with get_db_connection() as conn:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+            # Intentar convertir el commence_time a timestamp y comparar
             cursor.execute('''
                 SELECT * FROM pronosticos
-                WHERE TO_TIMESTAMP(commence_time, 'YYYY-MM-DD"T"HH24:MI:SS') < NOW() - INTERVAL '4 hours'
+                WHERE commence_time::timestamp < NOW() - INTERVAL '4 hours'
                 AND status = 'active'
             ''')
             results = cursor.fetchall()
