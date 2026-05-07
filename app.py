@@ -378,6 +378,38 @@ def mark_match_finished(match_id):
     return jsonify({'status': 'ok', 'match_id': match_id})
 
 
+@app.route('/api/debug-sql')
+def debug_sql():
+    """Endpoint para depurar la consulta SQL de partidos terminados"""
+    from database import get_db_connection
+    from psycopg2.extras import RealDictCursor
+
+    with get_db_connection() as conn:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Ver partidos activos con sus fechas
+        cursor.execute('''
+            SELECT match_id, home_team, away_team, commence_time,
+                   (commence_time::timestamp with time zone) as parsed_time,
+                   NOW() as current_time,
+                   NOW() - INTERVAL '4 hours' as cutoff_time,
+                   CASE WHEN (commence_time::timestamp with time zone) < NOW() - INTERVAL '4 hours'
+                        THEN 'SHOULD_BE_FINISHED'
+                        ELSE 'STILL_ACTIVE'
+                   END as status_check
+            FROM pronosticos
+            WHERE status = 'active'
+            ORDER BY commence_time DESC
+            LIMIT 10
+        ''')
+        results = cursor.fetchall()
+
+        return jsonify({
+            'total': len(results),
+            'matches': [dict(row) for row in results]
+        })
+
+
 @app.route('/api/debug')
 def debug():
     """Endpoint de depuración para ver el estado de la base de datos"""
