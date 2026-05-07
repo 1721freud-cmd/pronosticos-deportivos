@@ -11,6 +11,7 @@ USE_POSTGRES = DATABASE_URL is not None
 
 if USE_POSTGRES:
     # PostgreSQL
+    @contextmanager
     def get_db_connection():
         """Context manager para conexiones a PostgreSQL"""
         conn = psycopg2.connect(DATABASE_URL)
