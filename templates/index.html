@@ -8,75 +8,27 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-        }
-        .card-glow {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-        .card-glow:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15);
-        }
-        .confidence-bar {
-            transition: width 0.8s ease-out;
-        }
-        .pulse-dot {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .loading-spinner {
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .stat-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-        }
-        .combinada-card {
-            background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
-        }
-        .very-safe-badge {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        .favorite-badge {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        }
-        .risky-badge {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%); }
+        .card-glow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); transition: all 0.3s ease; }
+        .card-glow:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15); }
+        .confidence-bar { transition: width 0.8s ease-out; }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .loading-spinner { border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .stat-card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); }
+        .combinada-card { background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%); }
+        .very-safe-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .favorite-badge { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .risky-badge { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
-    <!-- Header -->
     <header class="border-b border-gray-700/30 backdrop-blur-xl bg-black/30 sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
@@ -105,9 +57,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="container mx-auto px-4 py-6">
-        <!-- Stats Bar -->
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
             <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
                 <div class="flex items-center gap-2 mb-2">
@@ -153,7 +103,6 @@
             </div>
         </div>
 
-        <!-- La Combinada del Día -->
         <section class="mb-10">
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
@@ -175,7 +124,6 @@
             </div>
         </section>
 
-        <!-- Todos los Partidos -->
         <section>
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div class="flex items-center gap-3">
@@ -188,7 +136,6 @@
                     </div>
                 </div>
 
-                <!-- Filter Tabs -->
                 <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
                     <button onclick="filterMatches('all')" class="filter-btn active bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="all">
                         <i class="fas fa-th-large mr-2"></i>Todos
@@ -238,7 +185,6 @@
         </section>
     </main>
 
-    <!-- Footer -->
     <footer class="border-t border-gray-700/30 mt-12 py-6">
         <div class="container mx-auto px-4 text-center">
             <p class="text-gray-400 text-sm mb-2">
@@ -249,270 +195,6 @@
         </div>
     </footer>
 
-    <script>
-        let allMatches = [];
-        let currentFilter = 'all';
-
-        async function fetchMatches() {
-            try {
-                const response = await fetch('/api/matches');
-                const data = await response.json();
-                allMatches = data.matches;
-                updateStats(data.stats);
-                renderMatches();
-                await fetchCombinada();
-            } catch (error) {
-                console.error('Error fetching matches:', error);
-                document.getElementById('matches-container').innerHTML = `
-                    <div class="col-span-full text-center py-12 text-red-400">
-                        <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
-                        <p class="text-lg">Error al cargar los datos</p>
-                        <p class="text-sm text-gray-400 mt-2">Verifica tu API Key o intenta más tarde</p>
-                    </div>
-                `;
-            }
-        }
-
-        async function fetchCombinada() {
-            try {
-                const response = await fetch('/api/combinada');
-                const data = await response.json();
-                renderCombinada(data.combinada);
-            } catch (error) {
-                console.error('Error fetching combinada:', error);
-            }
-        }
-
-        function updateStats(stats) {
-            document.getElementById('today-count').textContent = stats.today_count || 0;
-            document.getElementById('tomorrow-count').textContent = stats.tomorrow_count || 0;
-            document.getElementById('favorites-count').textContent = stats.favorites || 0;
-            document.getElementById('very-safe-count').textContent = stats.very_safe || 0;
-            document.getElementById('avg-confidence').textContent = (stats.avg_confidence || 0) + '%';
-
-            const now = new Date();
-            document.getElementById('last-update').textContent = now.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit' });
-        }
-
-        function getConfidenceBadge(match) {
-            if (match.is_very_safe) {
-                return '<span class="very-safe-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-shield-alt mr-1"></i>MUY SEGURO</span>';
-            } else if (match.is_clear_favorite) {
-                return '<span class="favorite-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-star mr-1"></i>FAVORITO</span>';
-            } else if (match.is_risky) {
-                return '<span class="risky-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>RIESGOSO</span>';
-            }
-            return '';
-        }
-
-        function getConfidenceColor(confidence) {
-            if (confidence >= 75) return 'from-green-500 to-emerald-500';
-            if (confidence >= 60) return 'from-blue-500 to-cyan-500';
-            if (confidence >= 50) return 'from-yellow-500 to-orange-500';
-            return 'from-red-500 to-pink-500';
-        }
-
-        function getConfidenceTextColor(confidence) {
-            if (confidence >= 75) return 'text-green-400';
-            if (confidence >= 60) return 'text-blue-400';
-            if (confidence >= 50) return 'text-yellow-400';
-            return 'text-red-400';
-        }
-
-        function renderCombinada(combinada) {
-            const container = document.getElementById('combinada-container');
-
-            if (combinada.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-gray-700/30 text-center">
-                        <i class="fas fa-info-circle text-5xl text-gray-500 mb-4"></i>
-                        <p class="text-gray-400">No hay suficientes favoritos claros hoy</p>
-                        <p class="text-sm text-gray-500 mt-2">Se requiere confianza ≥ 60%</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = combinada.map((match, index) => `
-                <div class="combinada-card backdrop-blur-sm rounded-xl p-5 border border-yellow-500/30 card-glow fade-in" style="animation-delay: ${index * 0.1}s">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-3 flex-wrap">
-                                <span class="bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-3 py-1 rounded-lg text-sm font-bold">#${index + 1}</span>
-                                <span class="text-gray-400 text-sm">${match.date} • ${match.time}</span>
-                                ${match.is_today ? '<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-medium">HOY</span>' : ''}
-                                ${match.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
-                                ${match.league ? `<span class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs font-medium">${match.league}</span>` : ''}
-                            </div>
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="text-lg font-semibold">${match.home_team}</div>
-                                <div class="text-gray-500 font-bold">VS</div>
-                                <div class="text-lg font-semibold">${match.away_team}</div>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm text-gray-400">Confianza</span>
-                                        <span class="text-2xl font-bold text-yellow-400">${match.confidence}%</span>
-                                    </div>
-                                    <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
-                                        <div class="confidence-bar h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full" style="width: ${match.confidence}%"></div>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-gray-400">Pronóstico</div>
-                                    <div class="text-lg font-bold text-white">${match.prediction}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderMatches() {
-            const container = document.getElementById('matches-container');
-
-            let filteredMatches = allMatches;
-            if (currentFilter === 'today') {
-                filteredMatches = allMatches.filter(m => m.is_today);
-            } else if (currentFilter === 'tomorrow') {
-                filteredMatches = allMatches.filter(m => m.is_tomorrow);
-            } else if (currentFilter === 'football') {
-                filteredMatches = allMatches.filter(m => m.sport === 'football');
-            } else if (currentFilter === 'basketball') {
-                filteredMatches = allMatches.filter(m => m.sport === 'basketball');
-            } else if (currentFilter === 'favorites') {
-                filteredMatches = allMatches.filter(m => m.is_clear_favorite);
-            } else if (currentFilter === 'very-safe') {
-                filteredMatches = allMatches.filter(m => m.is_very_safe);
-            } else if (currentFilter === 'premier') {
-                filteredMatches = allMatches.filter(m => m.league === 'Premier League');
-            } else if (currentFilter === 'laliga') {
-                filteredMatches = allMatches.filter(m => m.league === 'La Liga');
-            } else if (currentFilter === 'seriea') {
-                filteredMatches = allMatches.filter(m => m.league === 'Serie A');
-            } else if (currentFilter === 'bundesliga') {
-                filteredMatches = allMatches.filter(m => m.league === 'Bundesliga');
-            } else if (currentFilter === 'ucl') {
-                filteredMatches = allMatches.filter(m => m.league === 'Champions League');
-            } else if (currentFilter === 'argentina') {
-                filteredMatches = allMatches.filter(m => m.league === 'Liga Argentina');
-            }
-
-            if (filteredMatches.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-gray-400">
-                        <i class="fas fa-calendar-times text-5xl mb-4"></i>
-                        <p class="text-lg">No hay partidos disponibles</p>
-                        <p class="text-sm text-gray-500 mt-2">Intenta con otro filtro</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = filteredMatches.map((match, index) => `
-                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-gray-700/30 card-glow fade-in ${match.is_very_safe ? 'border-green-500/30' : match.is_clear_favorite ? 'border-blue-500/30' : ''}" style="animation-delay: ${index * 0.05}s">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            ${match.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
-                            <span class="text-gray-400 text-sm">${match.date} • ${match.time}</span>
-                            ${match.is_today ? '<span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-medium">HOY</span>' : ''}
-                            ${match.is_tomorrow ? '<span class="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded text-xs font-medium">MAÑANA</span>' : ''}
-                            ${match.league ? `<span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs font-medium">${match.league}</span>` : ''}
-                        </div>
-                        ${getConfidenceBadge(match)}
-                    </div>
-
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-center flex-1">
-                            <div class="font-semibold text-sm mb-1 truncate">${match.home_team}</div>
-                            <div class="text-lg font-bold ${match.prediction_team === 'home' ? 'text-green-400' : 'text-gray-400'}">${match.home_odds}</div>
-                        </div>
-                        <div class="text-center px-3">
-                            <div class="text-gray-600 text-xs font-bold">VS</div>
-                        </div>
-                        <div class="text-center flex-1">
-                            <div class="font-semibold text-sm mb-1 truncate">${match.away_team}</div>
-                            <div class="text-lg font-bold ${match.prediction_team === 'away' ? 'text-green-400' : 'text-gray-400'}">${match.away_odds}</div>
-                        </div>
-                    </div>
-
-                    ${match.draw_odds ? `
-                    <div class="text-center mb-4 py-2 bg-white/5 rounded-lg">
-                        <span class="text-gray-400 text-sm">Empate: </span>
-                        <span class="font-bold ${match.prediction_team === 'draw' ? 'text-green-400' : 'text-gray-400'}">${match.draw_odds}</span>
-                    </div>
-                    ` : ''}
-
-                    <div class="border-t border-gray-700/30 pt-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm text-gray-400">Nivel de Confianza</span>
-                            <span class="text-xl font-bold ${getConfidenceTextColor(match.confidence)}">${match.confidence}%</span>
-                        </div>
-                        <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
-                            <div class="confidence-bar h-full bg-gradient-to-r ${getConfidenceColor(match.confidence)} rounded-full" style="width: ${match.confidence}%"></div>
-                        </div>
-                        <div class="mt-2 flex items-center justify-between">
-                            <span class="text-sm text-gray-400">Pronóstico: </span>
-                            <span class="font-medium ${getConfidenceTextColor(match.confidence)}">${match.prediction}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function filterMatches(filter) {
-            currentFilter = filter;
-
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                if (btn.dataset.filter === filter) {
-                    btn.classList.remove('bg-white/10');
-                    btn.classList.add('bg-blue-600');
-                } else {
-                    btn.classList.remove('bg-blue-600');
-                    btn.classList.add('bg-white/10');
-                }
-            });
-
-            renderMatches();
-        }
-
-        function refreshData() {
-            document.getElementById('matches-container').innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            document.getElementById('combinada-container').innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            fetchMatches();
-        }
-
-        function scheduleNextUpdate() {
-            // Obtener hora actual en Argentina (UTC-3)
-            const now = new Date();
-            const argentinaTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
-            const hours = argentinaTime.getHours();
-            const minutes = argentinaTime.getMinutes();
-
-            // Calcular tiempo hasta la próxima actualización (12am o 12pm hora argentina)
-            let nextUpdateHours;
-            if (hours < 12) {
-                nextUpdateHours = 12 - hours;
-            } else {
-                nextUpdateHours = 24 - hours;
-            }
-
-            const nextUpdateMinutes = 60 - minutes;
-            const nextUpdateMs = (nextUpdateHours * 60 * 60 * 1000) + (nextUpdateMinutes * 60 * 1000);
-
-            const nextUpdateDate = new Date(now.getTime() + nextUpdateMs);
-            console.log(`Próxima actualización a las ${nextUpdateDate.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })} (hora argentina)`);
-
-            setTimeout(() => {
-                fetchMatches();
-                scheduleNextUpdate(); // Programar la siguiente actualización
-            }, nextUpdateMs);
-        }
-
-        fetchMatches();
-        scheduleNextUpdate(); // Programar actualizaciones a las 12am y 12pm
-    </script>
+    <script src="/static/app.js"></script>
 </body>
 </html>

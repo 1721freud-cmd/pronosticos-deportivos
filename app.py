@@ -3,7 +3,6 @@ import requests
 import os
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
-from functools import lru_cache
 import time
 from database import init_db, save_pronostico, get_pronosticos, get_stats as get_db_stats, update_pronostico_status
 
@@ -11,20 +10,39 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configuración de la API
+# Configuración
 ODDS_API_KEY = os.getenv('ODDS_API_KEY')
 BASE_URL = 'https://api.the-odds-api.com/v4'
+CACHE_DURATION = 43200  # 12 horas
+CONFIDENCE_THRESHOLD_FAVORITE = 60
+CONFIDENCE_THRESHOLD_VERY_SAFE = 75
+CONFIDENCE_THRESHOLD_RISKY = 50
 
 # Inicializar base de datos
 init_db()
 
-# Cache para evitar llamadas repetidas a la API
-# Actualización a las 12am y 12pm (12 horas de cache)
-CACHE_DURATION = 43200  # 12 horas (43200 segundos)
+# Cache en memoria
 cache = {'data': None, 'timestamp': 0}
 
+# Ligas de fútbol
+FOOTBALL_LEAGUES = [
+    ('soccer_epl', 'Premier League'),
+    ('soccer_spain_la_liga', 'La Liga'),
+    ('soccer_italy_serie_a', 'Serie A'),
+    ('soccer_germany_bundesliga', 'Bundesliga'),
+    ('soccer_france_ligue_one', 'Ligue 1'),
+    ('soccer_uefa_champs_league', 'Champions League'),
+    ('soccer_argentina_primera_division', 'Liga Argentina')
+]
+
+SPORT_NAMES = {
+    'football': 'Fútbol',
+    'basketball': 'NBA'
+}
+
+
 def get_odds(sport_key, regions='us', markets='h2h'):
-    """Obtiene las cuotas de una API para un deporte específico"""
+    """Obtiene las cuotas de la API"""
     url = f'{BASE_URL}/sports/{sport_key}/odds'
     params = {
         'api_key': ODDS_API_KEY,
@@ -37,9 +55,9 @@ def get_odds(sport_key, regions='us', markets='h2h'):
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error obteniendo cuotas: {e}")
+    except requests.exceptions.RequestException:
         return []
+
 
 def calculate_confidence(home_odds, draw_odds, away_odds):
     """Calcula el nivel de confianza basado en las cuotas"""
@@ -64,12 +82,37 @@ def calculate_confidence(home_odds, draw_odds, away_odds):
         'confidence': round(confidence, 1),
         'prediction': prediction,
         'prediction_team': prediction_team,
-        'is_clear_favorite': confidence >= 60,
-        'is_very_safe': confidence >= 75,
-        'is_risky': confidence < 50
+        'is_clear_favorite': confidence >= CONFIDENCE_THRESHOLD_FAVORITE,
+        'is_very_safe': confidence >= CONFIDENCE_THRESHOLD_VERY_SAFE,
+        'is_risky': confidence < CONFIDENCE_THRESHOLD_RISKY
     }
 
-def analyze_match(match, sport_type):
+
+def parse_datetime(commence_time):
+    """Parsea y formatea la fecha del partido"""
+    try:
+        dt = datetime.fromisoformat(commence_time.replace('Z', '+00:00'))
+        now_utc = datetime.now(timezone.utc)
+        return {
+            'time': dt.strftime('%H:%M'),
+            'date': dt.strftime('%d/%m'),
+            'datetime': dt,
+            'is_today': dt.date() == now_utc.date(),
+            'is_tomorrow': dt.date() == (now_utc + timedelta(days=1)).date(),
+            'days_until': (dt.date() - now_utc.date()).days
+        }
+    except:
+        return {
+            'time': '--:--',
+            'date': '--/--',
+            'datetime': None,
+            'is_today': False,
+            'is_tomorrow': False,
+            'days_until': 999
+        }
+
+
+def analyze_match(match, sport_type, league_name=None):
     """Analiza un partido y extrae la información relevante"""
     bookmakers = match.get('bookmakers', [])
     if not bookmakers:
@@ -77,7 +120,6 @@ def analyze_match(match, sport_type):
 
     first_bookmaker = bookmakers[0]
     markets = first_bookmaker.get('markets', [])
-
     if not markets:
         return None
 
@@ -112,41 +154,22 @@ def analyze_match(match, sport_type):
         return None
 
     confidence_data = calculate_confidence(home_odds, draw_odds, away_odds)
-
-    commence_time = match.get('commence_time', '')
-    try:
-        dt = datetime.fromisoformat(commence_time.replace('Z', '+00:00'))
-        formatted_time = dt.strftime('%H:%M')
-        formatted_date = dt.strftime('%d/%m')
-        formatted_datetime = dt
-        is_today = dt.date() == datetime.now(timezone.utc).date()
-        is_tomorrow = dt.date() == (datetime.now(timezone.utc) + timedelta(days=1)).date()
-        days_until = (dt.date() - datetime.now(timezone.utc).date()).days
-    except:
-        formatted_time = '--:--'
-        formatted_date = '--/--'
-        formatted_datetime = None
-        is_today = False
-        is_tomorrow = False
-        days_until = 999
+    date_info = parse_datetime(match.get('commence_time', ''))
 
     return {
         'id': match.get('id'),
         'home_team': match.get('home_team'),
         'away_team': match.get('away_team'),
         'sport': sport_type,
-        'sport_name': 'Fútbol' if sport_type == 'football' else 'NBA',
-        'time': formatted_time,
-        'date': formatted_date,
-        'datetime': formatted_datetime,
-        'is_today': is_today,
-        'is_tomorrow': is_tomorrow,
-        'days_until': days_until,
+        'sport_name': SPORT_NAMES.get(sport_type, sport_type),
+        'league': league_name,
+        **date_info,
         'home_odds': round(home_odds, 2),
         'draw_odds': round(draw_odds, 2) if draw_odds else None,
         'away_odds': round(away_odds, 2),
         **confidence_data
     }
+
 
 def get_all_matches():
     """Obtiene todos los partidos con cache"""
@@ -157,35 +180,24 @@ def get_all_matches():
 
     matches = []
 
-    # Ligas de fútbol
-    football_leagues = [
-        ('soccer_epl', 'Premier League'),
-        ('soccer_la_liga', 'La Liga'),
-        ('soccer_serie_a', 'Serie A'),
-        ('soccer_bundesliga', 'Bundesliga'),
-        ('soccer_uefa_champions_league', 'Champions League'),
-        ('soccer_argentina_primera_division', 'Liga Argentina')
-    ]
-
-    for league_key, league_name in football_leagues:
+    # Obtener partidos de fútbol
+    for league_key, league_name in FOOTBALL_LEAGUES:
         try:
             league_matches = get_odds(league_key, regions='eu', markets='h2h')
             for match in league_matches:
-                analyzed = analyze_match(match, 'football')
+                analyzed = analyze_match(match, 'football', league_name)
                 if analyzed:
-                    analyzed['league'] = league_name
                     matches.append(analyzed)
                     save_pronostico(analyzed)
         except Exception as e:
             print(f"Error obteniendo {league_name}: {e}")
 
-    # NBA
+    # Obtener partidos de NBA
     try:
         nba_matches = get_odds('basketball_nba', regions='us', markets='h2h')
         for match in nba_matches:
-            analyzed = analyze_match(match, 'basketball')
+            analyzed = analyze_match(match, 'basketball', 'NBA')
             if analyzed:
-                analyzed['league'] = 'NBA'
                 matches.append(analyzed)
                 save_pronostico(analyzed)
     except Exception as e:
@@ -199,20 +211,22 @@ def get_all_matches():
 
     return matches
 
+
 def get_todays_matches():
     """Obtiene solo partidos de hoy y mañana"""
     all_matches = get_all_matches()
     return [m for m in all_matches if m['days_until'] <= 1]
 
+
 def get_combinada(matches):
-    """Genera la combinada del día con los 3 pronósticos más seguros de hoy"""
-    # Filtrar solo partidos de hoy y favoritos claros
-    today_favorites = [m for m in matches if m['is_clear_favorite'] and m['days_until'] <= 1]
-
-    # Ordenar por confianza descendente
+    """Genera la combinada del día con los 3 pronósticos más seguros"""
+    today_favorites = [
+        m for m in matches
+        if m['is_clear_favorite'] and m['days_until'] <= 1
+    ]
     today_favorites.sort(key=lambda x: x['confidence'], reverse=True)
-
     return today_favorites[:3]
+
 
 def get_stats(matches):
     """Calcula estadísticas generales"""
@@ -228,26 +242,22 @@ def get_stats(matches):
         }
 
     total = len(matches)
-    favorites = len([m for m in matches if m['is_clear_favorite']])
-    very_safe = len([m for m in matches if m['is_very_safe']])
-    risky = len([m for m in matches if m['is_risky']])
-    avg_confidence = round(sum(m['confidence'] for m in matches) / total, 1) if total > 0 else 0
-    today_count = len([m for m in matches if m['is_today']])
-    tomorrow_count = len([m for m in matches if m['is_tomorrow']])
-
     return {
         'total': total,
-        'favorites': favorites,
-        'very_safe': very_safe,
-        'risky': risky,
-        'avg_confidence': avg_confidence,
-        'today_count': today_count,
-        'tomorrow_count': tomorrow_count
+        'favorites': sum(1 for m in matches if m['is_clear_favorite']),
+        'very_safe': sum(1 for m in matches if m['is_very_safe']),
+        'risky': sum(1 for m in matches if m['is_risky']),
+        'avg_confidence': round(sum(m['confidence'] for m in matches) / total, 1),
+        'today_count': sum(1 for m in matches if m['is_today']),
+        'tomorrow_count': sum(1 for m in matches if m['is_tomorrow'])
     }
 
+
+# Rutas
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/api/matches')
 def api_matches():
@@ -259,6 +269,7 @@ def api_matches():
         'total': len(matches)
     })
 
+
 @app.route('/api/all-matches')
 def api_all_matches():
     matches = get_all_matches()
@@ -269,6 +280,7 @@ def api_all_matches():
         'total': len(matches)
     })
 
+
 @app.route('/api/combinada')
 def api_combinada():
     matches = get_todays_matches()
@@ -278,13 +290,16 @@ def api_combinada():
         'total': len(combinada)
     })
 
+
 @app.route('/api/health')
 def health():
     return jsonify({'status': 'ok', 'message': 'API funcionando correctamente'})
 
+
 @app.route('/historial')
 def historial():
     return render_template('historial.html')
+
 
 @app.route('/api/historial')
 def api_historial():
@@ -298,18 +313,22 @@ def api_historial():
         'total': len(pronosticos)
     })
 
+
 @app.route('/api/historial/stats')
 def api_historial_stats():
-    stats = get_db_stats()
-    return jsonify(stats)
+    return jsonify(get_db_stats())
+
 
 @app.route('/api/historial/<match_id>/update', methods=['POST'])
 def update_pronostico(match_id):
     data = request.json
-    status = data.get('status')
-    result = data.get('result')
-    update_pronostico_status(match_id, status, result)
+    update_pronostico_status(
+        match_id,
+        data.get('status'),
+        data.get('result')
+    )
     return jsonify({'status': 'ok'})
+
 
 if __name__ == '__main__':
     print("Iniciando servidor de pronosticos deportivos...")
