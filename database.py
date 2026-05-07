@@ -111,12 +111,11 @@ if USE_POSTGRES:
             params = []
 
             if status:
+                # Filtrar por estado específico
                 query += ' WHERE status = %s'
                 params.append(status)
-            elif status is None:
-                # No filtrar por estado, devolver todos
-                pass
             else:
+                # Por defecto, excluir partidos activos
                 query += ' WHERE status != %s'
                 params.append('active')
 
