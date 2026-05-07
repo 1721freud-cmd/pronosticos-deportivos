@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from functools import lru_cache
 import time
 from database import init_db, save_pronostico, get_pronosticos, get_stats as get_db_stats, update_pronostico_status
-from ml_predictor import ml_predictor, train_ml_model, predict_with_ml, get_ml_stats
 
 load_dotenv()
 
@@ -61,23 +60,13 @@ def calculate_confidence(home_odds, draw_odds, away_odds):
         prediction = 'Empate'
         prediction_team = 'draw'
 
-    # Predicción ML si hay modelo entrenado
-    ml_prediction = None
-    if ml_predictor.model is not None:
-        try:
-            ml_result = predict_with_ml(home_odds, away_odds, draw_odds, confidence)
-            ml_prediction = ml_result
-        except Exception as e:
-            print(f"Error en predicción ML: {e}")
-
     return {
         'confidence': round(confidence, 1),
         'prediction': prediction,
         'prediction_team': prediction_team,
         'is_clear_favorite': confidence >= 60,
         'is_very_safe': confidence >= 75,
-        'is_risky': confidence < 50,
-        'ml_prediction': ml_prediction
+        'is_risky': confidence < 50
     }
 
 def analyze_match(match, sport_type):
@@ -297,10 +286,6 @@ def health():
 def historial():
     return render_template('historial.html')
 
-@app.route('/ml')
-def ml():
-    return render_template('ml.html')
-
 @app.route('/api/historial')
 def api_historial():
     limit = int(request.args.get('limit', 50))
@@ -325,47 +310,6 @@ def update_pronostico(match_id):
     result = data.get('result')
     update_pronostico_status(match_id, status, result)
     return jsonify({'status': 'ok'})
-
-@app.route('/api/ml/train', methods=['POST'])
-def train_ml():
-    """Entrena el modelo de Machine Learning"""
-    try:
-        success = train_ml_model()
-        if success:
-            return jsonify({'status': 'ok', 'message': 'Modelo entrenado exitosamente'})
-        else:
-            return jsonify({'status': 'error', 'message': 'No hay suficientes datos para entrenar (mínimo 10 pronósticos con resultados)'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/ml/stats')
-def ml_stats():
-    """Obtiene estadísticas del modelo ML"""
-    stats = get_ml_stats()
-    if stats is None:
-        return jsonify({
-            'model_trained': False,
-            'message': 'El modelo no ha sido entrenado aún'
-        })
-    return jsonify(stats)
-
-@app.route('/api/ml/predict', methods=['POST'])
-def ml_predict():
-    """Hace una predicción ML para un partido específico"""
-    data = request.json
-    home_odds = data.get('home_odds')
-    away_odds = data.get('away_odds')
-    draw_odds = data.get('draw_odds')
-    confidence = data.get('confidence')
-
-    if not all([home_odds, away_odds, confidence]):
-        return jsonify({'status': 'error', 'message': 'Faltan datos requeridos'}), 400
-
-    try:
-        prediction = predict_with_ml(home_odds, away_odds, draw_odds, confidence)
-        return jsonify({'status': 'ok', 'prediction': prediction})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     print("Iniciando servidor de pronosticos deportivos...")
