@@ -1,45 +1,39 @@
 import sqlite3
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 import os
 import pickle
 from datetime import datetime, timedelta
+import math
+import random
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'pronosticos.db')
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'ml_model.pkl')
-SCALER_PATH = os.path.join(os.path.dirname(__file__), 'scaler.pkl')
 
-class MLPredictor:
+class SimpleMLPredictor:
+    """Predictor ML simple sin dependencias externas"""
+
     def __init__(self):
         self.model = None
-        self.scaler = StandardScaler()
         self.load_model()
 
     def load_model(self):
         """Carga el modelo entrenado si existe"""
-        if os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH):
+        if os.path.exists(MODEL_PATH):
             try:
                 with open(MODEL_PATH, 'rb') as f:
                     self.model = pickle.load(f)
-                with open(SCALER_PATH, 'rb') as f:
-                    self.scaler = pickle.load(f)
                 print("Modelo ML cargado exitosamente")
             except Exception as e:
                 print(f"Error cargando modelo: {e}")
                 self.model = None
         else:
             print("No hay modelo entrenado, se creará uno nuevo")
-            self.model = RandomForestClassifier(n_estimators=100, random_state=42)
+            self.model = None
 
     def save_model(self):
         """Guarda el modelo entrenado"""
         try:
             with open(MODEL_PATH, 'wb') as f:
                 pickle.dump(self.model, f)
-            with open(SCALER_PATH, 'wb') as f:
-                pickle.dump(self.scaler, f)
             print("Modelo ML guardado exitosamente")
         except Exception as e:
             print(f"Error guardando modelo: {e}")
@@ -50,7 +44,6 @@ class MLPredictor:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        # Obtener pronósticos con resultados
         cursor.execute('''
             SELECT home_odds, away_odds, draw_odds, confidence,
                    prediction_team, status
@@ -71,22 +64,29 @@ class MLPredictor:
         y = []
 
         for row in results:
-            # Features: cuotas y confianza
+            # Features normalizadas
             features = [
-                row['home_odds'],
-                row['away_odds'],
-                row['draw_odds'] if row['draw_odds'] else 0,
-                row['confidence']
+                self._normalize_odds(row['home_odds']),
+                self._normalize_odds(row['away_odds']),
+                self._normalize_odds(row['draw_odds'] if row['draw_odds'] else 3.0),
+                row['confidence'] / 100
             ]
             X.append(features)
 
             # Target: 1 si ganó, 0 si perdió
             y.append(1 if row['status'] == 'won' else 0)
 
-        return np.array(X), np.array(y)
+        return X, y
+
+    def _normalize_odds(self, odds):
+        """Normaliza cuotas a un rango 0-1"""
+        if odds is None:
+            return 0.5
+        # Cuotas típicas van de 1.0 a 10.0+
+        return min(max((odds - 1) / 9, 0), 1)
 
     def train(self):
-        """Entrena el modelo con datos históricos"""
+        """Entrena el modelo con datos históricos usando un algoritmo simple"""
         X, y = self.get_training_data()
 
         if X is None or len(X) < 10:
@@ -95,48 +95,113 @@ class MLPredictor:
 
         print(f"Entrenando modelo con {len(X)} muestras...")
 
-        # Dividir datos
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
+        # Algoritmo simple: Weighted Average
+        # Calcula pesos para cada feature basado en correlación con el resultado
+        weights = self._calculate_weights(X, y)
 
-        # Escalar features
-        X_train_scaled = self.scaler.fit_transform(X_train)
-        X_test_scaled = self.scaler.transform(X_test)
+        # Calcular umbral óptimo
+        threshold = self._find_optimal_threshold(X, y, weights)
 
-        # Entrenar modelo
-        self.model.fit(X_train_scaled, y_train)
+        self.model = {
+            'weights': weights,
+            'threshold': threshold,
+            'trained': True,
+            'samples': len(X),
+            'accuracy': self._evaluate(X, y, weights, threshold)
+        }
 
-        # Evaluar
-        train_score = self.model.score(X_train_scaled, y_train)
-        test_score = self.model.score(X_test_scaled, y_test)
+        print(f"Precisión: {self.model['accuracy']:.2%}")
+        print(f"Umbral óptimo: {threshold:.2f}")
 
-        print(f"Precisión entrenamiento: {train_score:.2%}")
-        print(f"Precisión prueba: {test_score:.2%}")
-
-        # Guardar modelo
         self.save_model()
-
         return True
+
+    def _calculate_weights(self, X, y):
+        """Calcula pesos para cada feature"""
+        n_features = len(X[0])
+        weights = [0.0] * n_features
+
+        for i in range(n_features):
+            # Calcular correlación simple entre feature y resultado
+            feature_values = [x[i] for x in X]
+            mean_feature = sum(feature_values) / len(feature_values)
+            mean_result = sum(y) / len(y)
+
+            numerator = sum((fv - mean_feature) * (r - mean_result) for fv, r in zip(feature_values, y))
+            denominator = math.sqrt(sum((fv - mean_feature) ** 2 for fv in feature_values) *
+                                   sum((r - mean_result) ** 2 for r in y))
+
+            if denominator > 0:
+                weights[i] = abs(numerator / denominator)
+            else:
+                weights[i] = 0.0
+
+        # Normalizar pesos
+        total = sum(weights)
+        if total > 0:
+            weights = [w / total for w in weights]
+
+        return weights
+
+    def _find_optimal_threshold(self, X, y, weights):
+        """Encuentra el umbral óptimo para clasificación"""
+        scores = [self._score(x, weights) for x in X]
+
+        # Probar diferentes umbrales
+        best_threshold = 0.5
+        best_accuracy = 0
+
+        for threshold in [i / 100 for i in range(30, 71, 5)]:
+            predictions = [1 if score >= threshold else 0 for score in scores]
+            correct = sum(1 for p, r in zip(predictions, y) if p == r)
+            accuracy = correct / len(y)
+
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_threshold = threshold
+
+        return best_threshold
+
+    def _score(self, x, weights):
+        """Calcula el score de una muestra"""
+        return sum(w * v for w, v in zip(weights, x))
+
+    def _evaluate(self, X, y, weights, threshold):
+        """Evalúa el modelo"""
+        scores = [self._score(x, weights) for x in X]
+        predictions = [1 if score >= threshold else 0 for score in scores]
+        correct = sum(1 for p, r in zip(predictions, y) if p == r)
+        return correct / len(y)
 
     def predict(self, home_odds, away_odds, draw_odds, confidence):
         """Predice si un pronóstico será acertado"""
         if self.model is None:
             # Si no hay modelo, usar lógica simple
-            return confidence >= 60
+            return {
+                'will_win': confidence >= 60,
+                'confidence': confidence,
+                'using_ml': False
+            }
 
         # Preparar features
-        features = np.array([[home_odds, away_odds, draw_odds or 0, confidence]])
-        features_scaled = self.scaler.transform(features)
+        features = [
+            self._normalize_odds(home_odds),
+            self._normalize_odds(away_odds),
+            self._normalize_odds(draw_odds if draw_odds else 3.0),
+            confidence / 100
+        ]
+
+        # Calcular score
+        score = self._score(features, self.model['weights'])
 
         # Predecir
-        prediction = self.model.predict(features_scaled)[0]
-        probability = self.model.predict_proba(features_scaled)[0][1]
+        will_win = score >= self.model['threshold']
 
         return {
-            'will_win': bool(prediction),
-            'confidence': round(probability * 100, 1),
-            'using_ml': True
+            'will_win': will_win,
+            'confidence': round(score * 100, 1),
+            'using_ml': True,
+            'score': round(score, 3)
         }
 
     def get_feature_importance(self):
@@ -145,12 +210,12 @@ class MLPredictor:
             return None
 
         feature_names = ['Cuota Local', 'Cuota Visitante', 'Cuota Empate', 'Confianza']
-        importance = self.model.feature_importances_
+        importance = self.model['weights']
 
         return dict(zip(feature_names, importance))
 
 # Instancia global del predictor
-ml_predictor = MLPredictor()
+ml_predictor = SimpleMLPredictor()
 
 def train_ml_model():
     """Entrena el modelo ML"""
@@ -167,5 +232,7 @@ def get_ml_stats():
 
     return {
         'model_trained': True,
+        'samples': ml_predictor.model.get('samples', 0),
+        'accuracy': ml_predictor.model.get('accuracy', 0),
         'feature_importance': ml_predictor.get_feature_importance()
     }
