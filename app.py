@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import time
-from database import init_db, save_pronostico, get_pronosticos, get_stats as get_db_stats, update_pronostico_status
+from database import init_db, save_pronostico, get_pronosticos, get_stats as get_db_stats, update_pronostico_status, get_finished_matches, mark_as_finished, get_active_matches
 
 load_dotenv()
 
@@ -214,16 +214,29 @@ def get_all_matches():
 
 
 def get_todays_matches():
-    """Obtiene partidos de las últimas 24 horas desde la última actualización"""
+    """Obtiene partidos de las últimas 24 horas desde la última actualización, excluyendo terminados"""
     all_matches = get_all_matches()
+    now_utc = datetime.now(timezone.utc)
 
     if cache['last_update']:
         # Filtrar partidos de las últimas 24 horas desde la última actualización
         cutoff_time = cache['last_update'] - timedelta(hours=24)
-        return [m for m in all_matches if m['datetime'] and m['datetime'] >= cutoff_time]
+        # Excluir partidos que ya terminaron (más de 3 horas después del inicio)
+        return [
+            m for m in all_matches
+            if m['datetime'] and m['datetime'] >= cutoff_time and (m['datetime'] + timedelta(hours=3)) >= now_utc
+        ]
     else:
-        # Si no hay actualización registrada, mostrar todos los partidos
-        return all_matches
+        # Si no hay actualización registrada, mostrar todos los partidos no terminados
+        return [m for m in all_matches if m['datetime'] and (m['datetime'] + timedelta(hours=3)) >= now_utc]
+
+
+def check_finished_matches():
+    """Verifica y marca partidos terminados"""
+    finished = get_finished_matches()
+    for match in finished:
+        mark_as_finished(match['match_id'])
+    return len(finished)
 
 
 def get_combinada(matches):
@@ -276,6 +289,8 @@ def index():
 
 @app.route('/api/matches')
 def api_matches():
+    # Verificar partidos terminados antes de devolver los matches
+    check_finished_matches()
     matches = get_todays_matches()
     stats = get_stats(matches)
     return jsonify({
@@ -343,6 +358,16 @@ def update_pronostico(match_id):
         data.get('result')
     )
     return jsonify({'status': 'ok'})
+
+
+@app.route('/api/check-finished', methods=['POST'])
+def check_finished():
+    """Verifica y marca partidos terminados"""
+    count = check_finished_matches()
+    return jsonify({
+        'status': 'ok',
+        'finished_count': count
+    })
 
 
 if __name__ == '__main__':

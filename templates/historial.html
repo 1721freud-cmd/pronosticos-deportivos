@@ -8,31 +8,338 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%); }
-        .card-glow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); transition: all 0.3s ease; }
-        .card-glow:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15); }
-        .stat-card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); }
-        .won-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .lost-badge { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .pending-badge { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glass Effects */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge-green {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .badge-blue {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .badge-yellow {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .badge-purple {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .badge-orange {
+            background: rgba(249, 115, 22, 0.2);
+            color: #f97316;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-fill.green {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .progress-fill.blue {
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .progress-fill.yellow {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .progress-fill.red {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .progress-fill.purple {
+            background: linear-gradient(90deg, #8b5cf6 0%, #6366f6 100%);
+        }
+
+        /* Stats */
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stat-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200%; }
+            100% { background-position: 200%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.3); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .animate-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .animate-shimmer {
+            animation: shimmer 2s linear infinite;
+        }
+
+        .animate-glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .animate-scale-in {
+            animation: scaleIn 0.5s ease-out forwards;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Filter Buttons */
+        .filter-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Stagger Animation */
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; }
+        .stagger-6 { animation-delay: 0.6s; }
     </style>
 </head>
-<body class="gradient-bg min-h-screen text-white">
-    <header class="border-b border-gray-700/30 backdrop-blur-xl bg-black/30 sticky top-0 z-50">
+<body class="antialiased">
+    <!-- Background Elements -->
+    <div class="fixed inset-0 -z-10 pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute bottom-1/4 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-3xl animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-500/20 rounded-full blur-3xl animate-float" style="animation-delay: 3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <a href="/" class="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                        <i class="fas fa-chart-line text-xl"></i>
+                    <a href="/" class="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-line text-lg"></i>
                     </a>
                     <div>
-                        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Historial</h1>
+                        <h1 class="text-xl font-bold gradient-text">Historial</h1>
                         <p class="text-xs text-gray-400">Pronósticos realizados</p>
                     </div>
                 </div>
-                <div class="flex gap-2">
-                    <a href="/" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                <div class="flex items-center gap-2">
+                    <a href="/" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium transition-all">
                         <i class="fas fa-home mr-2"></i>Inicio
                     </a>
                 </div>
@@ -40,73 +347,105 @@
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-6">
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-list text-blue-400"></i>
-                    <span class="text-gray-400 text-xs">Total</span>
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-24 pb-32">
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+            <div class="glass-card rounded-2xl p-5 animate-scale-in">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-list text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="total-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold" id="total-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-check-circle text-green-400"></i>
-                    <span class="text-gray-400 text-xs">Acertados</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-1">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-check-circle text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Acertados</div>
+                        <div class="stat-value text-green-400" id="won-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-green-400" id="won-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-times-circle text-red-400"></i>
-                    <span class="text-gray-400 text-xs">Fallados</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-2">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-times-circle text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Fallados</div>
+                        <div class="stat-value text-red-400" id="lost-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-red-400" id="lost-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-clock text-yellow-400"></i>
-                    <span class="text-gray-400 text-xs">Pendientes</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-3">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-clock text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Pendientes</div>
+                        <div class="stat-value text-yellow-400" id="pending-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-yellow-400" id="pending-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-percentage text-purple-400"></i>
-                    <span class="text-gray-400 text-xs">Acierto</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-4">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-percentage text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Acierto</div>
+                        <div class="stat-value text-purple-400" id="win-rate">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-purple-400" id="win-rate">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-star text-orange-400"></i>
-                    <span class="text-gray-400 text-xs">Favoritos</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-star text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Favoritos</div>
+                        <div class="stat-value text-orange-400" id="favorites-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-orange-400" id="favorites-count">-</div>
             </div>
         </div>
 
-        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="filterHistorial('all')" class="filter-btn active bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="all">
+        <!-- Filter Tabs -->
+        <div class="flex gap-2 mb-8 overflow-x-auto scrollbar-hide pb-2">
+            <button onclick="filterHistorial('all')" class="filter-btn active bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-blue-500/25" data-filter="all">
                 <i class="fas fa-th-large mr-2"></i>Todos
             </button>
-            <button onclick="filterHistorial('won')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="won">
+            <button onclick="filterHistorial('won')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="won">
                 <i class="fas fa-check mr-2"></i>Acertados
             </button>
-            <button onclick="filterHistorial('lost')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="lost">
+            <button onclick="filterHistorial('lost')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="lost">
                 <i class="fas fa-times mr-2"></i>Fallados
             </button>
-            <button onclick="filterHistorial('pending')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="pending">
+            <button onclick="filterHistorial('pending')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="pending">
                 <i class="fas fa-clock mr-2"></i>Pendientes
             </button>
         </div>
 
+        <!-- Historial Container -->
         <div id="historial-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div class="loading-spinner mx-auto"></div>
         </div>
     </main>
 
-    <script src="/static/app.js"></script>
     <script>
         let allPronosticos = [];
         let currentFilter = 'all';
@@ -121,7 +460,7 @@
             } catch (error) {
                 console.error('Error fetching historial:', error);
                 document.getElementById('historial-container').innerHTML = `
-                    <div class="col-span-full text-center py-12 text-red-400">
+                    <div class="col-span-full text-center py-12 text-red-400 fade-in">
                         <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
                         <p class="text-lg">Error al cargar el historial</p>
                     </div>
@@ -130,21 +469,34 @@
         }
 
         function updateStats(stats) {
-            document.getElementById('total-count').textContent = stats.total || 0;
-            document.getElementById('won-count').textContent = stats.won || 0;
-            document.getElementById('lost-count').textContent = stats.lost || 0;
-            document.getElementById('pending-count').textContent = stats.pending || 0;
-            document.getElementById('win-rate').textContent = (stats.win_rate || 0) + '%';
-            document.getElementById('favorites-count').textContent = stats.favorites || 0;
+            const elements = {
+                'total-count': stats.total || 0,
+                'won-count': stats.won || 0,
+                'lost-count': stats.lost || 0,
+                'pending-count': stats.pending || 0,
+                'win-rate': (stats.win_rate || 0) + '%',
+                'favorites-count': stats.favorites || 0
+            };
+
+            Object.entries(elements).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.opacity = '0';
+                    setTimeout(() => {
+                        el.textContent = value;
+                        el.style.opacity = '1';
+                    }, 100);
+                }
+            });
         }
 
         function getStatusBadge(status) {
             if (status === 'won') {
-                return '<span class="won-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check mr-1"></i>ACERTADO</span>';
+                return '<span class="badge badge-green"><i class="fas fa-check mr-1"></i>ACERTADO</span>';
             } else if (status === 'lost') {
-                return '<span class="lost-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-times mr-1"></i>FALLADO</span>';
+                return '<span class="badge badge-red"><i class="fas fa-times mr-1"></i>FALLADO</span>';
             } else {
-                return '<span class="pending-badge px-2 py-1 rounded text-xs font-bold"><i class="fas fa-clock mr-1"></i>PENDIENTE</span>';
+                return '<span class="badge badge-yellow"><i class="fas fa-clock mr-1"></i>PENDIENTE</span>';
             }
         }
 
@@ -178,7 +530,7 @@
 
             if (filteredPronosticos.length === 0) {
                 container.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-gray-400">
+                    <div class="col-span-full text-center py-12 text-gray-400 fade-in">
                         <i class="fas fa-calendar-times text-5xl mb-4"></i>
                         <p class="text-lg">No hay pronósticos con este filtro</p>
                     </div>
@@ -187,11 +539,12 @@
             }
 
             container.innerHTML = filteredPronosticos.map((p, index) => `
-                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-gray-700/30 card-glow">
+                <div class="glass-card rounded-xl p-5 border ${p.status === 'won' ? 'border-green-500/30' : p.status === 'lost' ? 'border-red-500/30' : 'border-yellow-500/30'} animate-slide-in" style="animation-delay: ${index * 0.05}s">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             ${p.sport === 'football' ? '<i class="fas fa-futbol text-green-400"></i>' : '<i class="fas fa-basketball-ball text-orange-400"></i>'}
                             <span class="text-gray-400 text-sm">${p.date} • ${p.time}</span>
+                            ${p.league ? `<span class="badge badge-blue">${p.league}</span>` : ''}
                         </div>
                         ${getStatusBadge(p.status)}
                     </div>
@@ -223,7 +576,7 @@
                             <span class="text-xl font-bold ${getConfidenceTextColor(p.confidence)}">${p.confidence}%</span>
                         </div>
                         <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-r ${getConfidenceColor(p.confidence)} rounded-full" style="width: ${p.confidence}%"></div>
+                            <div class="progress-fill ${getConfidenceColor(p.confidence)} rounded-full" style="width: ${p.confidence}%"></div>
                         </div>
                         <div class="mt-2 flex items-center justify-between">
                             <span class="text-sm text-gray-400">Pronóstico: </span>
@@ -238,13 +591,7 @@
             currentFilter = filter;
 
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                if (btn.dataset.filter === filter) {
-                    btn.classList.remove('bg-white/10');
-                    btn.classList.add('bg-blue-600');
-                } else {
-                    btn.classList.remove('bg-blue-600');
-                    btn.classList.add('bg-white/10');
-                }
+                btn.classList.toggle('active', btn.dataset.filter === filter);
             });
 
             renderHistorial();

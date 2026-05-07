@@ -8,48 +8,360 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%); }
-        .card-glow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); transition: all 0.3s ease; }
-        .card-glow:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15); }
-        .confidence-bar { transition: width 0.8s ease-out; }
-        .pulse-dot { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .loading-spinner { border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .stat-card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); }
-        .combinada-card { background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%); }
-        .very-safe-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .favorite-badge { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .risky-badge { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glass Effects */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge-green {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .badge-blue {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .badge-yellow {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .badge-purple {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .badge-orange {
+            background: rgba(249, 115, 22, 0.2);
+            color: #f97316;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-fill.green {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .progress-fill.blue {
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .progress-fill.yellow {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .progress-fill.red {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .progress-fill.purple {
+            background: linear-gradient(90deg, #8b5cf6 0%, #6366f6 100%);
+        }
+
+        /* Stats */
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stat-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200%; }
+            100% { background-position: 200%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.3); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .animate-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .animate-shimmer {
+            animation: shimmer 2s linear infinite;
+        }
+
+        .animate-glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .animate-scale-in {
+            animation: scaleIn 0.5s ease-out forwards;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.09) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
+        }
+
+        /* Filter Buttons */
+        .filter-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Match Card */
+        .match-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .match-card:hover {
+            transform: translateY(-6px);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Stagger Animation */
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; }
+        .stagger-6 { animation-delay: 0.6s; }
     </style>
 </head>
-<body class="gradient-bg min-h-screen text-white">
-    <header class="border-b border-gray-700/30 backdrop-blur-xl bg-black/30 sticky top-0 z-50">
+<body class="antialiased">
+    <!-- Background Elements -->
+    <div class="fixed inset-0 -z-10 pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute bottom-1/4 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-3xl animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-500/20 rounded-full blur-3xl animate-float" style="animation-delay: 3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-chart-line text-xl"></i>
-                    </div>
+                    <a href="/" class="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-line text-lg"></i>
+                    </a>
                     <div>
-                        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Pronósticos Pro</h1>
+                        <h1 class="text-xl font-bold gradient-text">Pronósticos Pro</h1>
                         <p class="text-xs text-gray-400">Análisis inteligente de cuotas</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div class="hidden md:flex items-center gap-2 text-sm bg-white/5 px-3 py-2 rounded-lg">
-                        <span class="pulse-dot w-2 h-2 bg-green-500 rounded-full"></span>
+                <div class="flex items-center gap-2">
+                    <div class="hidden md:flex items-center gap-2 text-sm glass px-3 py-2 rounded-lg">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                         <span class="text-gray-400">En vivo</span>
                     </div>
-                    <a href="/historial" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <a href="/historial" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium transition-all">
                         <i class="fas fa-history mr-2"></i>Historial
                     </a>
-                    <button onclick="refreshData()" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-blue-500/25">
+                    <button onclick="refreshData()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition-all">
                         <i class="fas fa-sync-alt mr-2"></i>Actualizar
                     </button>
                 </div>
@@ -57,65 +369,97 @@
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-6">
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-calendar-day text-blue-400"></i>
-                    <span class="text-gray-400 text-xs">Hoy</span>
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-24 pb-32">
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+            <div class="glass-card rounded-2xl p-5 animate-scale-in">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-calendar-day text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Hoy</div>
+                        <div class="stat-value" id="today-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold" id="today-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-calendar-plus text-purple-400"></i>
-                    <span class="text-gray-400 text-xs">Mañana</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-1">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-calendar-plus text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Mañana</div>
+                        <div class="stat-value" id="tomorrow-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold" id="tomorrow-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-star text-yellow-400"></i>
-                    <span class="text-gray-400 text-xs">Favoritos</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-2">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-star text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Favoritos</div>
+                        <div class="stat-value text-yellow-400" id="favorites-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-yellow-400" id="favorites-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-shield-alt text-green-400"></i>
-                    <span class="text-gray-400 text-xs">Muy seguros</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-3">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-shield-alt text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Muy seguros</div>
+                        <div class="stat-value text-green-400" id="very-safe-count">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-green-400" id="very-safe-count">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-percentage text-orange-400"></i>
-                    <span class="text-gray-400 text-xs">Confianza</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-4">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-percentage text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Confianza</div>
+                        <div class="stat-value text-orange-400" id="avg-confidence">-</div>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-orange-400" id="avg-confidence">-</div>
             </div>
-            <div class="stat-card backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-clock text-cyan-400"></i>
-                    <span class="text-gray-400 text-xs">Actualizado</span>
+
+            <div class="glass-card rounded-2xl p-5 animate-scale-in stagger-5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg stat-icon">
+                        <i class="fas fa-clock text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Actualizado</div>
+                        <div class="stat-value text-cyan-400" id="last-update">-</div>
+                    </div>
                 </div>
-                <div class="text-lg font-bold text-cyan-400" id="last-update">-</div>
             </div>
         </div>
 
-        <section class="mb-10">
-            <div class="flex items-center justify-between mb-6">
+        <!-- La Combinada del Día -->
+        <section class="mb-16">
+            <div class="flex items-center justify-between mb-8">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-crown"></i>
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg animate-glow">
+                        <i class="fas fa-crown text-xl"></i>
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold">La Combinada del Día</h2>
-                        <p class="text-sm text-gray-400">Top 3 pronósticos más seguros de hoy</p>
+                        <p class="text-sm text-gray-400">Top 3 pronósticos más seguros</p>
                     </div>
                 </div>
-                <span class="bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full text-sm font-medium hidden md:block">
-                    <i class="fas fa-fire mr-1"></i>Alta confianza
+                <span class="badge badge-yellow animate-pulse">
+                    <i class="fas fa-fire mr-2"></i>Alta confianza
                 </span>
             </div>
 
@@ -124,11 +468,12 @@
             </div>
         </section>
 
+        <!-- Todos los Partidos -->
         <section>
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-list"></i>
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg animate-glow">
+                        <i class="fas fa-list text-xl"></i>
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold">Partidos</h2>
@@ -136,44 +481,45 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
-                    <button onclick="filterMatches('all')" class="filter-btn active bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="all">
+                <!-- Filter Tabs -->
+                <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+                    <button onclick="filterMatches('all')" class="filter-btn active bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-blue-500/25" data-filter="all">
                         <i class="fas fa-th-large mr-2"></i>Todos
                     </button>
-                    <button onclick="filterMatches('today')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="today">
+                    <button onclick="filterMatches('today')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="today">
                         <i class="fas fa-calendar-day mr-2"></i>Hoy
                     </button>
-                    <button onclick="filterMatches('tomorrow')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="tomorrow">
+                    <button onclick="filterMatches('tomorrow')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="tomorrow">
                         <i class="fas fa-calendar-plus mr-2"></i>Mañana
                     </button>
-                    <button onclick="filterMatches('football')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="football">
+                    <button onclick="filterMatches('football')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="football">
                         <i class="fas fa-futbol mr-2"></i>Fútbol
                     </button>
-                    <button onclick="filterMatches('basketball')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="basketball">
+                    <button onclick="filterMatches('basketball')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="basketball">
                         <i class="fas fa-basketball-ball mr-2"></i>NBA
                     </button>
-                    <button onclick="filterMatches('favorites')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="favorites">
+                    <button onclick="filterMatches('favorites')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="favorites">
                         <i class="fas fa-star mr-2"></i>Favoritos
                     </button>
-                    <button onclick="filterMatches('very-safe')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="very-safe">
+                    <button onclick="filterMatches('very-safe')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="very-safe">
                         <i class="fas fa-shield-alt mr-2"></i>Muy seguros
                     </button>
-                    <button onclick="filterMatches('premier')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="premier">
+                    <button onclick="filterMatches('premier')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="premier">
                         <i class="fas fa-trophy mr-2"></i>Premier
                     </button>
-                    <button onclick="filterMatches('laliga')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="laliga">
+                    <button onclick="filterMatches('laliga')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="laliga">
                         <i class="fas fa-trophy mr-2"></i>La Liga
                     </button>
-                    <button onclick="filterMatches('seriea')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="seriea">
+                    <button onclick="filterMatches('seriea')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="seriea">
                         <i class="fas fa-trophy mr-2"></i>Serie A
                     </button>
-                    <button onclick="filterMatches('bundesliga')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="bundesliga">
+                    <button onclick="filterMatches('bundesliga')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="bundesliga">
                         <i class="fas fa-trophy mr-2"></i>Bundesliga
                     </button>
-                    <button onclick="filterMatches('ucl')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="ucl">
+                    <button onclick="filterMatches('ucl')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="ucl">
                         <i class="fas fa-star mr-2"></i>UCL
                     </button>
-                    <button onclick="filterMatches('argentina')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap" data-filter="argentina">
+                    <button onclick="filterMatches('argentina')" class="filter-btn bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shadow-lg hover:shadow-gray-500/25" data-filter="argentina">
                         <i class="fas fa-flag mr-2"></i>Argentina
                     </button>
                 </div>
@@ -185,6 +531,7 @@
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="border-t border-gray-700/30 mt-12 py-6">
         <div class="container mx-auto px-4 text-center">
             <p class="text-gray-400 text-sm mb-2">

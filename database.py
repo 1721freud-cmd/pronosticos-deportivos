@@ -88,7 +88,7 @@ def save_pronostico(match):
                 1 if match.get('is_clear_favorite') else 0,
                 1 if match.get('is_very_safe') else 0,
                 1 if match.get('is_risky') else 0,
-                'pending'
+                'active'  # Estado inicial: activo
             ))
             conn.commit()
         except sqlite3.IntegrityError:
@@ -106,6 +106,9 @@ def get_pronosticos(limit=50, status=None):
         if status:
             query += ' WHERE status = ?'
             params.append(status)
+        else:
+            # Si no se especifica estado, incluir todos excepto los que están activos
+            query += ' WHERE status != "active"'
 
         query += ' ORDER BY created_at DESC LIMIT ?'
         params.append(limit)
@@ -177,3 +180,46 @@ def _row_to_dict(row):
     pronostico['is_very_safe'] = bool(pronostico['is_very_safe'])
     pronostico['is_risky'] = bool(pronostico['is_risky'])
     return pronostico
+
+
+def get_finished_matches():
+    """Obtiene partidos que ya terminaron (basado en la fecha)"""
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+
+        # Obtener partidos con commence_time anterior a ahora y estado activo
+        cursor.execute('''
+            SELECT * FROM pronosticos
+            WHERE commence_time < datetime('now')
+            AND status = 'active'
+        ''')
+        results = cursor.fetchall()
+
+        return [_row_to_dict(row) for row in results]
+
+
+def mark_as_finished(match_id):
+    """Marca un partido como terminado (cambia de active a pending para historial)"""
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE pronosticos
+            SET status = 'pending'
+            WHERE match_id = ? AND status = 'active'
+        ''', (match_id,))
+        conn.commit()
+
+
+def get_active_matches():
+    """Obtiene solo partidos activos (no terminados)"""
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT * FROM pronosticos
+            WHERE status = 'active'
+            ORDER BY created_at DESC
+        ''')
+        results = cursor.fetchall()
+
+        return [_row_to_dict(row) for row in results]
