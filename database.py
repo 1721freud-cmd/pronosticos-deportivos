@@ -183,7 +183,7 @@ if USE_POSTGRES:
 
             cursor.execute('''
                 SELECT * FROM pronosticos
-                WHERE commence_time < NOW() - INTERVAL '4 hours'
+                WHERE TO_TIMESTAMP(commence_time, 'YYYY-MM-DD"T"HH24:MI:SS') < NOW() - INTERVAL '4 hours'
                 AND status = 'active'
             ''')
             results = cursor.fetchall()
