@@ -213,16 +213,16 @@ def get_all_matches():
 
 
 def get_todays_matches():
-    """Obtiene solo partidos de hoy y mañana"""
+    """Obtiene solo partidos de los próximos 3 días"""
     all_matches = get_all_matches()
-    return [m for m in all_matches if m['days_until'] <= 1]
+    return [m for m in all_matches if m['days_until'] <= 2]
 
 
 def get_combinada(matches):
     """Genera la combinada del día con los 3 pronósticos más seguros"""
     today_favorites = [
         m for m in matches
-        if m['is_clear_favorite'] and m['days_until'] <= 1
+        if m['is_clear_favorite'] and m['days_until'] <= 2
     ]
     today_favorites.sort(key=lambda x: x['confidence'], reverse=True)
     return today_favorites[:3]
